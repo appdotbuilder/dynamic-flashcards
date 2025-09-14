@@ -1,13 +1,32 @@
+import { db } from '../db';
+import { instancesTable, dataTypesTable } from '../db/schema';
 import { type CreateInstanceInput, type Instance } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function createInstance(input: CreateInstanceInput): Promise<Instance> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new instance of a custom data type
-    // (e.g., creating "France" as an instance of "Country" type) and persisting it in the database.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createInstance = async (input: CreateInstanceInput): Promise<Instance> => {
+  try {
+    // Verify the data type exists to prevent foreign key constraint violations
+    const dataType = await db.select()
+      .from(dataTypesTable)
+      .where(eq(dataTypesTable.id, input.type_id))
+      .execute();
+
+    if (dataType.length === 0) {
+      throw new Error(`Data type with id ${input.type_id} not found`);
+    }
+
+    // Insert instance record
+    const result = await db.insert(instancesTable)
+      .values({
         type_id: input.type_id,
-        name: input.name,
-        created_at: new Date()
-    } as Instance);
-}
+        name: input.name
+      })
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Instance creation failed:', error);
+    throw error;
+  }
+};

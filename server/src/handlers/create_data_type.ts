@@ -1,13 +1,23 @@
+import { db } from '../db';
+import { dataTypesTable } from '../db/schema';
 import { type CreateDataTypeInput, type DataType } from '../schema';
 
-export async function createDataType(input: CreateDataTypeInput): Promise<DataType> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new custom data type (e.g., Country, Quantity)
-    // and persisting it in the database.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createDataType = async (input: CreateDataTypeInput): Promise<DataType> => {
+  try {
+    // Insert data type record
+    const result = await db.insert(dataTypesTable)
+      .values({
         name: input.name,
-        description: input.description || null,
-        created_at: new Date()
-    } as DataType);
-}
+        description: input.description || null
+      })
+      .returning()
+      .execute();
+
+    // Return the created data type
+    const dataType = result[0];
+    return dataType;
+  } catch (error) {
+    console.error('Data type creation failed:', error);
+    throw error;
+  }
+};

@@ -1,8 +1,19 @@
+import { db } from '../db';
+import { flashcardsTable } from '../db/schema';
 import { type Flashcard } from '../schema';
 
-export async function getFlashcards(): Promise<Flashcard[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all available flashcards
-    // for the flashcard answering experience.
-    return Promise.resolve([]);
-}
+export const getFlashcards = async (): Promise<Flashcard[]> => {
+  try {
+    const results = await db.select()
+      .from(flashcardsTable)
+      .execute();
+
+    return results.map(flashcard => ({
+      ...flashcard,
+      options: flashcard.options ? (flashcard.options as string[]) : null
+    }));
+  } catch (error) {
+    console.error('Flashcard retrieval failed:', error);
+    throw error;
+  }
+};
